@@ -1,10 +1,61 @@
+import axios from "axios";
+import { onAuthStateChanged } from "firebase/auth";
+import { doc, onSnapshot } from "firebase/firestore";
 import React, { createContext, useContext, useEffect, useState } from "react";
+import { CoinList } from "./config/api";
+import { auth, db } from "./firebase";
 
 const Crypto = createContext();
 
 const CryptoContext = ({ children }) => {
   const [currency, setCurrency] = useState("INR");
   const [symbol, setSymbol] = useState("₹");
+  const [coins, setCoins] = useState([]);
+  const [watchlist, setWatchlist] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [user, setUser] = useState(null);
+  const [alert, setAlert] = useState({
+    open: false,
+    message: "",
+    type: "SUCCESS",
+  });
+
+  useEffect(() => {
+    if (user) {
+      const coinRef = doc(db, "watchlist", user.uid);
+
+      //onSnapshot checks if the firebase database has updated or not.
+      var unsubscribe = onSnapshot(coinRef, (coin) => {
+        if (coin.exists()) {
+          setWatchlist(coin.data().coins);
+        } else {
+          console.log("No items in Watchlist");
+        }
+      });
+
+      return () => {
+        //For unnecessary checking simultaniously, after the snapshot is done we unsubscribe the function.
+        unsubscribe();
+      };
+    }
+  }, [user]);
+  useEffect(() => {
+    // Firebase function that takes auth and returns a callback function
+    onAuthStateChanged(auth, (user) => {
+      if (user) setUser(user);
+      else setUser(null);
+      console.log(user);
+    });
+  }, []);
+
+  const fetchCoins = async () => {
+    setLoading(true);
+    const { data } = await axios.get(CoinList(currency));
+    console.log(data);
+
+    setCoins(data);
+    setLoading(false);
+  };
 
   useEffect(() => {
     if (currency === "INR") setSymbol("₹");
@@ -12,7 +63,20 @@ const CryptoContext = ({ children }) => {
   }, [currency]);
 
   return (
-    <Crypto.Provider value={{ currency, setCurrency, symbol }}>
+    <Crypto.Provider
+      value={{
+        currency,
+        setCurrency,
+        symbol,
+        coins,
+        loading,
+        fetchCoins,
+        alert,
+        setAlert,
+        user,
+        watchlist,
+      }}
+    >
       {children}
     </Crypto.Provider>
   );
