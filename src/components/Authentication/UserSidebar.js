@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import clsx from "clsx";
+// import clsx from "clsx";
 import { makeStyles } from "@material-ui/core/styles";
 import Drawer from "@material-ui/core/Drawer";
 import Button from "@material-ui/core/Button";
@@ -167,7 +167,7 @@ export default function UserSidebar() {
                     Watchlist
                   </span>
                   {coins.map((coin) => {
-                    if (watchlist.includes(coin.id))
+                    if (watchlist.includes(coin.id)) {
                       return (
                         <div className={classes.coin}>
                           <span>{coin.name}</span>
@@ -183,6 +183,7 @@ export default function UserSidebar() {
                           </span>
                         </div>
                       );
+                    } else return null;
                   })}
                 </div>
               </div>
